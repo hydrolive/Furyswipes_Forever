@@ -41,7 +41,7 @@ Class defaults: warrior tank; rogue, death knight, monk, demon hunter melee; hun
 
 - `/click Button` from a macro does nothing on this client. Bind `CLICK ButtonName:LeftButton` with `SetBinding`, then `SaveBindings`.
 - `header:WrapScript(frame, script, body)` is the method form used by Forever addons. Wrapping a button with itself is `button:WrapScript(button, "PreClick", body)`. The global form is `SecureHandlerWrapScript(frame, script, header, body)`.
-- The secure PreClick snippet cannot define a function, cannot `return` (that can swallow the click), and cannot call `UnitName` (secret strings). Heal the lowest health with `UnitExists`, `UnitHealth`, `UnitHealthMax`, and `UnitIsDead`. Tank priority uses `UnitGroupRolesAssigned(unit) == "TANK"` when that call exists. Compare with `== nil`, because `0` is a valid health fraction.
+- The secure PreClick snippet cannot define a function, cannot `return` (that can swallow the click), and cannot call `UnitName` (secret strings). Key 2 starts as the damage macro and switches to a heal only when health is at or under the roster thresholds. Health can be a secret value in combat, so the click itself decides. Out of combat, `SyncPrimaryHeal` sets the same choice from real numbers. Do not leave an unconditional heal on key 2: that casts at full health when the snippet does not run. Keys 3 and 5 are the always-heal keys.
 - If `WrapScript` fails, the healer button keeps a party-order `/cast` macro.
 - Do not test `[noexists]` or `[noharm]` on attack macros. Untargeted self-cast AoE must still fire. `/stopmacro [help]` is the friendly-assist stop.
 - Ground-targeted spells are omitted. A broadcast key cannot place a reticle in every window.

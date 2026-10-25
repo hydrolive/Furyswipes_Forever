@@ -20,6 +20,10 @@ The Forever addon is written, committed, and copied to `D:\WoWMB\World of Warcra
 
 Newest first.
 
+### 2026-10-24 — Key 2 healed at full health
+
+The healer's key 2 rested on a party heal that cannot see health, so full health still cast a heal. Key 2 now rests on the damage macro. A heal is chosen only when someone is at or under the roster thresholds (self 30%, tank 50%, anyone 33%). Keys 3 and 5 still heal on purpose. Needs a `/reload`, then key 2 at full health should attack.
+
 ### 2026-10-24 — Invites ignored spaced names
 
 Pressing 0 on Grim Reaper printed "Waiting for an invite from Grim Reaper" and sent nothing. `UnitName("player")` on this client is `Grim`, so the addon did not treat that window as the leader and did not match the roster. Name checks now use `GetUnitName(unit, true)`. The live roster (Grim Reaper, Glass Cannon, Free Range, Bad Omen, Im Oom) is in the repo. Needs a `/reload` on each window, then 0 on the leader. The leader's chat should say `Inviting 4 character(s).`
