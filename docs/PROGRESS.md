@@ -20,6 +20,10 @@ The Forever addon is written, committed, and copied to `D:\WoWMB\World of Warcra
 
 Newest first.
 
+### 2026-10-24 — Invites ignored spaced names
+
+Pressing 0 on Grim Reaper printed "Waiting for an invite from Grim Reaper" and sent nothing. `UnitName("player")` on this client is `Grim`, so the addon did not treat that window as the leader and did not match the roster. Name checks now use `GetUnitName(unit, true)`. The live roster (Grim Reaper, Glass Cannon, Free Range, Bad Omen, Im Oom) is in the repo. Needs a `/reload` on each window, then 0 on the leader. The leader's chat should say `Inviting 4 character(s).`
+
 ### 2026-10-24 — Deploy path is WoWMB
 
 The Forever client to update is `D:\WoWMB\World of Warcraft\_forever_`, not `D:\WoW\World of Warcraft\_forever_`. Copied `FurySwipes` into `D:\WoWMB\World of Warcraft\_forever_\Interface\AddOns\FurySwipes`. The six files matched the repo by hash. Other addons in that folder were left as they were. An earlier copy under `D:\WoW\...` is not the client to maintain.

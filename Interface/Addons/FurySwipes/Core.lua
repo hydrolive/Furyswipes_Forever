@@ -22,7 +22,7 @@ end
 function FurySwipes.Role()
 	local override = FurySwipesChar and FurySwipesChar.role
 	if override and ROLES[override] then return override, "saved" end
-	local rosterRole = FurySwipes.RosterRole(UnitName("player"))
+	local rosterRole = FurySwipes.RosterRole(FurySwipes.UnitPlainName("player"))
 	if rosterRole and ROLES[rosterRole] then return rosterRole, "roster" end
 	if rosterRole and not ROLES[rosterRole] and not FurySwipes.roleWarned then
 		FurySwipes.roleWarned = true
@@ -60,7 +60,7 @@ end
 function FurySwipes.PrintReady(full)
 	local role, source = FurySwipes.Role()
 	local leader = FurySwipes.LeaderName() or "(none)"
-	local who = UnitName("player") or "this character"
+	local who = FurySwipes.UnitPlainName("player") or "this character"
 	FurySwipes.Print(who .. " is " .. role .. " (" .. source .. "). Leader is " .. leader .. ".")
 	if not FurySwipesDB.autoBind then
 		FurySwipes.Print("Run /fs init on this character to bind the multibox keys.")
@@ -216,7 +216,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 		if not announced then
 			announced = true
 			FurySwipes.PrintReady(false)
-			local name = UnitName("player")
+			local name = FurySwipes.UnitPlainName("player")
 			if name and not FurySwipes.OnRoster(name) then
 				FurySwipes.Print(name .. " is not listed in Roster.lua. Role fell back to the class default.")
 			end

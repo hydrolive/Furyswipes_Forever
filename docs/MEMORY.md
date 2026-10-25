@@ -29,7 +29,9 @@ Mama (`MAMA`) is installed on that client and is a useful API reference. Do not 
 
 Load order in `FurySwipes.toc`: `Roster.lua`, `Spells.lua`, `Group.lua`, `Actions.lua`, `Core.lua`. Interface 16001. Version 1.0.0. Saved variables: `FurySwipesDB` (account), `FurySwipesChar` (character). Namespace: `FurySwipes`. User roster table: `FurySwipesRoster`.
 
-`Roster.lua` is the same file on every window. The sample leader is Glarnk. Members: Glarnk tank, Broink caster, Sklerg hunter, Brunko melee, Furykipes healer. Heal fractions: self 0.30, tank 0.50, party 0.33. Replace the names before real use. No passwords in this file.
+`Roster.lua` is the same file on every window. Current team: Grim Reaper (tank, leader), Glass Cannon (caster), Free Range (hunter), Bad Omen (melee), Im Oom (healer). Heal fractions: self 0.30, tank 0.50, party 0.33. No passwords in this file.
+
+`UnitName()` on this client stops at the first space (`Grim Reaper` becomes `Grim`). Identity checks use `GetUnitName(unit, true)`, which returns the full name. A truncated first word still matches a roster name that continues after a space.
 
 Role precedence: `FurySwipesChar.role`, then a roster name match, then `FurySwipes.ClassRole`. Name match ignores a realm suffix on one side only.
 

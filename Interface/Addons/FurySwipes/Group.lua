@@ -5,18 +5,49 @@ FurySwipes = FurySwipes or {}
 
 local inviteGen = 0
 
+local function trim(name)
+	if type(name) ~= "string" then return nil end
+	name = name:gsub("^%s+", ""):gsub("%s+$", "")
+	if name == "" then return nil end
+	return name
+end
+
+-- UnitName() on this Forever client stops at the first space, so "Grim Reaper"
+-- comes back as "Grim" and the roster match fails. GetUnitName(unit, true) is
+-- the full character name, with "-Realm" appended for a cross-realm unit.
+function FurySwipes.UnitPlainName(unit)
+	local full = GetUnitName and GetUnitName(unit, true) or nil
+	if type(full) ~= "string" or full == "" then
+		full = UnitName(unit)
+	end
+	full = trim(full)
+	if not full then return nil end
+	local base = full:match("^(.-)%-[^%s%-]+$")
+	if base and base ~= "" then return base end
+	return full
+end
+
 local function me()
-	return UnitName("player")
+	return FurySwipes.UnitPlainName("player")
 end
 
 local function same(a, b)
+	a, b = trim(a), trim(b)
 	if not a or not b then return false end
 	if a:lower() == b:lower() then return true end
-	-- Roster names are stored without a realm. UnitName sometimes returns Name-Realm.
-	if a:find("-", 1, true) and b:find("-", 1, true) then return false end
-	local ashort = a:match("^([^%-]+)")
-	local bshort = b:match("^([^%-]+)")
-	return ashort and bshort and ashort:lower() == bshort:lower()
+	local function base(name)
+		return name:match("^(.-)%-[^%s%-]+$") or name
+	end
+	a, b = base(a), base(b)
+	if a:lower() == b:lower() then return true end
+	-- One side is the truncated UnitName ("Grim") and the other is the full name.
+	local aw, bw = a:match("^(%S+)"), b:match("^(%S+)")
+	if aw and bw and aw:lower() == bw:lower() then
+		local aSpaced = a:find("%s", 1, true) ~= nil
+		local bSpaced = b:find("%s", 1, true) ~= nil
+		if aSpaced ~= bSpaced then return true end
+	end
+	return false
 end
 
 function FurySwipes.LeaderName()
@@ -67,12 +98,12 @@ function FurySwipes.InGroup(name)
 	if not IsInGroup or not IsInGroup() then return false end
 	if IsInRaid() then
 		for i = 1, GetNumGroupMembers() do
-			if same(UnitName("raid" .. i), name) then return true end
+			if same(FurySwipes.UnitPlainName("raid" .. i), name) then return true end
 		end
 		return false
 	end
 	for i = 1, 4 do
-		if same(UnitName("party" .. i), name) then return true end
+		if same(FurySwipes.UnitPlainName("party" .. i), name) then return true end
 	end
 	return false
 end
@@ -229,12 +260,12 @@ function FurySwipes.UnitToken(name)
 	if same(name, me()) then return "player" end
 	if IsInRaid and IsInRaid() then
 		for i = 1, GetNumGroupMembers() do
-			if same(UnitName("raid" .. i), name) then return "raid" .. i end
+			if same(FurySwipes.UnitPlainName("raid" .. i), name) then return "raid" .. i end
 		end
 		return nil
 	end
 	for i = 1, 4 do
-		if same(UnitName("party" .. i), name) then return "party" .. i end
+		if same(FurySwipes.UnitPlainName("party" .. i), name) then return "party" .. i end
 	end
 end
 

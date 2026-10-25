@@ -12,7 +12,7 @@
 --   party - anyone at or below this is healed before the healer switches to damage
 
 FurySwipesRoster = {
-	leader = "Glarnk",
+	leader = "Grim Reaper",
 	autoAccept = true,
 	heal = {
 		tank = 0.50,
@@ -20,10 +20,10 @@ FurySwipesRoster = {
 		self = 0.30,
 	},
 	members = {
-		{ name = "Glarnk", role = "tank" },
-		{ name = "Broink", role = "caster" },
-		{ name = "Sklerg", role = "hunter" },
-		{ name = "Brunko", role = "melee" },
-		{ name = "Furykipes", role = "healer" },
+		{ name = "Grim Reaper", role = "tank" },
+		{ name = "Glass Cannon", role = "caster" },
+		{ name = "Free Range", role = "hunter" },
+		{ name = "Bad Omen", role = "melee" },
+		{ name = "Im Oom", role = "healer" },
 	},
 }

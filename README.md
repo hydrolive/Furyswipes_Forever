@@ -32,7 +32,7 @@ Edit `Interface\AddOns\FurySwipes\Roster.lua`. Every window reads that same file
 - `members` is each character and a role: `tank`, `healer`, `melee`, `caster`, or `hunter`.
 - `heal` fractions are from 0 to 1. `self` is when a healer heals themselves first. `tank` is when a group-role tank is healed first. `party` is when anyone is hurt enough to heal. Above those, a healer casts a damage spell instead.
 
-The sample roster matches the old `toonlist.txt` names. Change them to your characters. No account names or passwords belong in this file.
+The roster in the repo is Grim Reaper (leader, tank), Glass Cannon, Free Range, Bad Omen, and Im Oom. Change those names when the team changes. No account names or passwords belong in this file.
 
 `/reload` after editing, on each logged-in window.
 

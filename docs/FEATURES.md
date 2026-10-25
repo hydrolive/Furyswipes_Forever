@@ -41,7 +41,7 @@ Shift-1 dispel is `partial` because mouseover is not broadcast. Clone windows di
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Invite by name, staggered | unverified | Leader only. A second press of 0 cancels the previous queue. |
+| Invite by name, staggered | unverified | Leader only. Spaced names use `GetUnitName`, because `UnitName` drops everything after the first space. A second press of 0 cancels the previous queue. |
 | Auto-accept roster invites | unverified | `autoAccept` in `Roster.lua`. |
 | Convert to raid | unverified | Only when the roster is larger than 5 and the group is full. `/fs raid` converts on demand. |
 | Free-for-all loot | unverified | Best-effort `C_PartyInfo.SetLootMethod`. |
