@@ -20,6 +20,10 @@ The Forever addon is written, committed, and copied to `D:\WoWMB\World of Warcra
 
 Newest first.
 
+### 2026-10-24 — Priest key 1 did not cast Power Word: Fortitude
+
+Im Oom's buff macro was `/cast [@player,nobuff:Power Word: Fortitude] Power Word: Fortitude`. That condition does not cast, and it never aimed at the party. Key 1 now casts Fortitude on the priest, then on each party member, one press per person. Prayer of Fortitude, at level 48, is the one-cast group version. Needs a `/reload`.
+
 ### 2026-10-24 — Key 1 casts Arcane Intellect on the mage, then the party
 
 Glass Cannon's saved buff macro was still only Frost Armor, so key 1 did nothing once that armor was up. Arcane Intellect was not in that spellbook. Rank 1 is trained (10 copper), unlike free Frost Armor. Key 1 now casts Arcane Intellect on the mage and then on each party member, one press per person, and says so when the spell is not trained. Needs a `/reload`.

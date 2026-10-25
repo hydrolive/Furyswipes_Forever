@@ -272,8 +272,8 @@ local function castMacro(unit, spell)
 	return "#showtooltip " .. spell .. "\n/cast [@" .. unit .. "] " .. spell
 end
 
-local function intellectUnits(party)
-	if not party then return { "player" } end
+local function partyUnits(walk)
+	if not walk then return { "player" } end
 	local units = { "player" }
 	if IsInRaid and IsInRaid() then
 		local count = GetNumGroupMembers and GetNumGroupMembers() or 0
@@ -300,28 +300,35 @@ local function intellectUnits(party)
 	return live
 end
 
-function FurySwipes.WarnIfIntellectUntrained()
+function FurySwipes.WarnIfPartyBuffUntrained()
 	local button = _G.FurySwipesBuff
-	if not button or button:GetAttribute("intellectknown") ~= "0" then return end
+	if not button or button:GetAttribute("partyknown") ~= "0" then return end
 	local now = GetTime and GetTime() or 0
-	if FurySwipes._intellectWarnAt and (now - FurySwipes._intellectWarnAt) < 3 then return end
-	FurySwipes._intellectWarnAt = now
-	FurySwipes.Print("Arcane Intellect is not trained. Buy rank 1 from a mage trainer (10 copper), then press 1 again.")
+	if FurySwipes._partyWarnAt and (now - FurySwipes._partyWarnAt) < 3 then return end
+	FurySwipes._partyWarnAt = now
+	local msg = button:GetAttribute("partywarn")
+	if type(msg) ~= "string" or msg == "" then
+		local spell = button:GetAttribute("partybuff") or "That buff"
+		msg = spell .. " is not trained. Buy it from a trainer, then press 1 again."
+	end
+	FurySwipes.Print(msg)
 end
 
 function FurySwipes.SyncBuffButton(advance)
 	if InCombatLockdown and InCombatLockdown() then return end
 	local button = _G.FurySwipesBuff
 	if not button then return end
-	local spell = button:GetAttribute("intellectspell")
+	local spell = button:GetAttribute("partybuff")
 	if type(spell) ~= "string" or spell == "" then return end
-	local units = intellectUnits(button:GetAttribute("intellectparty") == "1")
+	local aura = button:GetAttribute("partyaura")
+	if type(aura) ~= "string" or aura == "" then aura = spell end
+	local units = partyUnits(button:GetAttribute("partywalk") == "1")
 	local index = tonumber(button:GetAttribute("buffindex")) or 1
 	local allPresent = true
 	local anyUnknown = false
 	local firstMissing
 	for i = 1, #units do
-		local has = auraPresent(units[i], "Arcane Intellect")
+		local has = auraPresent(units[i], aura)
 		if has == nil then
 			anyUnknown = true
 			allPresent = false
@@ -406,7 +413,7 @@ local function createButtons()
 	if buttons.primary then return end
 	buttons.buff = newSecure("FurySwipesBuff")
 	buttons.buff:HookScript("PreClick", function()
-		FurySwipes.WarnIfIntellectUntrained()
+		FurySwipes.WarnIfPartyBuffUntrained()
 	end)
 	buttons.buff:HookScript("PostClick", function()
 		FurySwipes.SyncBuffButton(true)
@@ -447,24 +454,30 @@ function FurySwipes.RefreshActions()
 
 	local buffs = FurySwipes.KnownBuffs(class)
 	local armorSpell = ""
-	local intellectSpell = ""
-	local intellectParty = "0"
-	local intellectKnown = "1"
+	local partySpell = ""
+	local partyAura = ""
+	local partyWalk = "0"
+	local partyKnown = "1"
+	local partyWarn = ""
 	for i = 1, #buffs do
 		local entry = buffs[i]
-		if entry.intellect then
-			intellectSpell = entry.spell or ""
-			intellectParty = entry.group and "1" or "0"
-			intellectKnown = entry.trained == false and "0" or "1"
+		if entry.party then
+			partySpell = entry.spell or ""
+			partyAura = entry.aura or entry.spell or ""
+			partyWalk = entry.group and "1" or "0"
+			partyKnown = entry.trained == false and "0" or "1"
+			partyWarn = entry.warn or ""
 		elseif not entry.nopet and not entry.group then
 			armorSpell = entry.spell
 		end
 	end
 	setMacroButton(buttons.buff, FurySwipes.BuffMacro(buffs))
 	buttons.buff:SetAttribute("armorspell", armorSpell)
-	buttons.buff:SetAttribute("intellectspell", intellectSpell)
-	buttons.buff:SetAttribute("intellectparty", intellectParty)
-	buttons.buff:SetAttribute("intellectknown", intellectKnown)
+	buttons.buff:SetAttribute("partybuff", partySpell)
+	buttons.buff:SetAttribute("partyaura", partyAura)
+	buttons.buff:SetAttribute("partywalk", partyWalk)
+	buttons.buff:SetAttribute("partyknown", partyKnown)
+	buttons.buff:SetAttribute("partywarn", partyWarn)
 	FurySwipes.SyncBuffButton()
 	setMacroButton(buttons.assist, FurySwipes.AttackMacro(nil, { startattack = false }))
 	setMacroButton(buttons.follow, FurySwipes.FollowMacro(false))

@@ -156,7 +156,7 @@ local INTERRUPT = {
 -- is the one-cast group version. Armor is only the best one the mage knows.
 local BUFF = {
 	MAGE = { 23028, 10157, 10156, 1461, 1460, 1459, 22783, 22782, 6117, 10220, 10219, 7320, 7302, 7301, 7300, 168 },
-	PRIEST = { 1243, 17 },
+	PRIEST = { 10938, 10937, 2791, 1245, 1244, 1243, 10952, 10951, 1006, 602, 7128, 588 },
 	DRUID = { 1126 },
 	SHAMAN = { 324 },
 	PALADIN = { 465, 19740 },
@@ -292,9 +292,20 @@ local function pushBuff(spells, seen, name, kind, aura)
 end
 
 local INTELLECT_RANKS = { 10157, 10156, 1461, 1460, 1459 }
+local FORTITUDE_RANKS = { 10938, 10937, 2791, 1245, 1244, 1243 }
+local PRAYER_FORTITUDE = { 21564, 21562 }
+local INNER_FIRE_RANKS = { 10952, 10951, 1006, 602, 7128, 588 }
 
 local function idListed(ids, spellId)
 	return ids[spellId] or known(spellId)
+end
+
+local function anyListed(book, bookIds, ranks, name)
+	if name and book[name] then return true end
+	for i = 1, #ranks do
+		if idListed(bookIds, ranks[i]) then return true end
+	end
+	return false
 end
 
 function FurySwipes.KnownBuffs(class)
@@ -313,7 +324,7 @@ function FurySwipes.KnownBuffs(class)
 			spells[#spells + 1] = {
 				spell = "Arcane Brilliance",
 				aura = "Arcane Intellect",
-				intellect = true,
+				party = true,
 				trained = true,
 			}
 			seen["Arcane Brilliance"] = true
@@ -331,8 +342,9 @@ function FurySwipes.KnownBuffs(class)
 				spell = "Arcane Intellect",
 				group = true,
 				aura = "Arcane Intellect",
-				intellect = true,
+				party = true,
 				trained = trained or not haveBook,
+				warn = "Arcane Intellect is not trained. Buy rank 1 from a mage trainer (10 copper), then press 1 again.",
 			}
 			seen["Arcane Intellect"] = true
 		end
@@ -342,6 +354,36 @@ function FurySwipes.KnownBuffs(class)
 			pushBuff(spells, seen, "Ice Armor", "self")
 		elseif book["Frost Armor"] or not haveBook then
 			pushBuff(spells, seen, "Frost Armor", "self")
+		end
+		return spells
+	end
+	if class == "PRIEST" then
+		-- Power Word: Fortitude is single-target. The old macro tested
+		-- nobuff:Power Word: Fortitude, and that colon made the cast do nothing.
+		-- Prayer of Fortitude is the one-cast group version (level 48).
+		local prayer = anyListed(book, bookIds, PRAYER_FORTITUDE, "Prayer of Fortitude")
+		if prayer then
+			spells[#spells + 1] = {
+				spell = "Prayer of Fortitude",
+				aura = "Power Word: Fortitude",
+				party = true,
+				trained = true,
+			}
+			seen["Prayer of Fortitude"] = true
+		else
+			local trained = anyListed(book, bookIds, FORTITUDE_RANKS, "Power Word: Fortitude")
+			spells[#spells + 1] = {
+				spell = "Power Word: Fortitude",
+				group = true,
+				aura = "Power Word: Fortitude",
+				party = true,
+				trained = trained or not haveBook,
+				warn = "Power Word: Fortitude is not trained. Buy rank 1 from a priest trainer, then press 1 again.",
+			}
+			seen["Power Word: Fortitude"] = true
+		end
+		if anyListed(book, bookIds, INNER_FIRE_RANKS, "Inner Fire") then
+			pushBuff(spells, seen, "Inner Fire", "self")
 		end
 		return spells
 	end
