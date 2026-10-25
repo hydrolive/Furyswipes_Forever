@@ -131,3 +131,13 @@ Checked here: the addon is one folder, the TOC says Interface 16001, and the Lua
 - `UnitSetRole`, if you want tank priority rather than "lowest health".
 - Group invite and auto-accept against your realm.
 - OpenMultiBoxing's window title for the Forever client, if it is not `World of Warcraft`.
+
+## Tracking
+
+Work on this repo is recorded in three files:
+
+- `docs/FEATURES.md` lists each feature and whether it is confirmed.
+- `docs/PROGRESS.md` is the current milestone and the log of what landed.
+- `docs/MEMORY.md` holds paths, API choices, and constraints that should survive the next session.
+
+`AGENTS.md` tells an agent to update those files, commit, and push to GitHub after every change.

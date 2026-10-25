@@ -1,0 +1,37 @@
+# Progress
+
+## Now
+
+The Forever addon is written, committed, and copied to the local client. It has not been loaded on a logged-in character.
+
+**Next:** log each character in, run `/fs init`, and check the unverified rows in `docs/FEATURES.md`. Update a row to `done` only after that check. Record the result in the log below.
+
+## In-game checks still open
+
+- Secure heal targeting (PreClick on key 2). If install fails, party-order heal is the fallback and chat says so.
+- Spell names from the ids in `Spells.lua`. `/fs who` shows the spell that was chosen.
+- `UnitSetRole` / `UnitGroupRolesAssigned`, if tank priority should beat "lowest health".
+- Invite and auto-accept on this realm.
+- `CLICK` keybinds actually fire the secure buttons.
+- A cast stops `/follow`. Alt-4 starts it again.
+- OpenMultiBoxing's window title, if it is not `World of Warcraft`.
+
+## Log
+
+Newest first.
+
+### 2026-10-24 — Tracker and commit rule
+
+`AGENTS.md` now requires a commit and a push to GitHub after every change, and these three files are the record of features, progress, and memory.
+
+### 2026-10-24 — FurySwipes addon (`27aa31e`)
+
+Replaced the Vanilla 1.12 HotkeyNet pack with one Forever addon.
+
+- Added `Interface/AddOns/FurySwipes` (Roster, Spells, Group, Actions, Core) and `README.md`.
+- Removed Bag_Sort, BeanCounter, BonusScanner, Decursive, DPSMate, EnhTooltip, EzDismount, Postal, QuickHeal, Stubby, SuperMacro, WIM, and `_LazyPig` from the repo.
+- Left the modern Decursive already installed on the Forever client in place.
+- Copied the addon to `D:\WoW\World of Warcraft\_forever_\Interface\AddOns\FurySwipes`. The copy matched the repo by hash at the end of that session.
+- Checked TOC interface 16001 and Lua delimiter balance. No Lua interpreter was available. No in-game load.
+
+The local client copy is not a git remote. Later addon commits still need that folder copied again.
