@@ -173,14 +173,28 @@ local PET = {
 }
 
 local function known(spellId)
-	if C_SpellBook and C_SpellBook.IsSpellKnown and C_SpellBook.IsSpellKnown(spellId) then
-		return true
+	local bank = Enum and Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player
+	if C_SpellBook then
+		if bank and C_SpellBook.IsSpellInSpellBook then
+			local ok, yes = pcall(C_SpellBook.IsSpellInSpellBook, spellId, bank, false)
+			if ok and yes then return true end
+		end
+		if C_SpellBook.IsSpellKnown then
+			if bank then
+				local ok, yes = pcall(C_SpellBook.IsSpellKnown, spellId, bank)
+				if ok and yes then return true end
+			end
+			local ok, yes = pcall(C_SpellBook.IsSpellKnown, spellId)
+			if ok and yes then return true end
+		end
 	end
-	if IsPlayerSpell and IsPlayerSpell(spellId) then
-		return true
+	if IsPlayerSpell then
+		local ok, yes = pcall(IsPlayerSpell, spellId)
+		if ok and yes then return true end
 	end
-	if IsSpellKnown and IsSpellKnown(spellId) then
-		return true
+	if IsSpellKnown then
+		local ok, yes = pcall(IsSpellKnown, spellId)
+		if ok and yes then return true end
 	end
 	return false
 end
@@ -207,7 +221,7 @@ local function request(spellId)
 end
 
 function FurySwipes.CleanSpellName(name)
-	if not name then return nil end
+	if type(name) ~= "string" or name == "" then return nil end
 	return (name:gsub("%s*%([Rr]ank%s+%d+%)", ""):gsub("%s+$", ""))
 end
 
@@ -224,10 +238,14 @@ function FurySwipes.PickSpell(ids)
 end
 
 local function playerSpellBook()
-	local found = {}
+	local names = {}
+	local ids = {}
 	local function add(name)
 		name = FurySwipes.CleanSpellName(name)
-		if name then found[name] = true end
+		if name then names[name] = true end
+	end
+	local function addId(spellId)
+		if type(spellId) == "number" then ids[spellId] = true end
 	end
 	pcall(function()
 		if not (C_SpellBook and C_SpellBook.GetNumSpellBookSkillLines and C_SpellBook.GetSpellBookSkillLineInfo and C_SpellBook.GetSpellBookItemInfo) then
@@ -248,13 +266,22 @@ local function playerSpellBook()
 					if type(item) == "table" and not item.isPassive and not item.isOffSpec then
 						local unlearned = future and item.itemType == future
 						local castable = (not spellType) or item.itemType == nil or item.itemType == spellType
-						if not unlearned and castable then add(item.name) end
+						if not unlearned and castable then
+							add(item.name)
+							if C_SpellBook.GetSpellBookItemName then
+								local ok, bookName = pcall(C_SpellBook.GetSpellBookItemName, slot, bank)
+								if ok then add(bookName) end
+							end
+							-- actionID is the base spell. spellID can be an override.
+							addId(item.actionID)
+							addId(item.spellID)
+						end
 					end
 				end
 			end
 		end
 	end)
-	return found
+	return names, ids
 end
 
 local function pushBuff(spells, seen, name, kind, aura)
@@ -264,27 +291,56 @@ local function pushBuff(spells, seen, name, kind, aura)
 	spells[#spells + 1] = { spell = name, group = kind == "group", aura = aura or name }
 end
 
+local INTELLECT_RANKS = { 10157, 10156, 1461, 1460, 1459 }
+
+local function idListed(ids, spellId)
+	return ids[spellId] or known(spellId)
+end
+
 function FurySwipes.KnownBuffs(class)
 	local spells = {}
 	local seen = {}
 	local pet = FurySwipes.PickSpell(PET[class])
 	if pet then spells[#spells + 1] = { spell = pet, nopet = true } end
-	local book = playerSpellBook()
+	local book, bookIds = playerSpellBook()
 	local haveBook = next(book) ~= nil
-	if class == "MAGE" and haveBook then
-		if book["Arcane Brilliance"] then
-			pushBuff(spells, seen, "Arcane Brilliance", "self", "Arcane Intellect")
-		elseif book["Arcane Intellect"] then
-			pushBuff(spells, seen, "Arcane Intellect", "group", "Arcane Intellect")
-		elseif FurySwipes.Print and not FurySwipes.buffWarned then
-			FurySwipes.buffWarned = true
-			FurySwipes.Print("Arcane Intellect is not in the spellbook. Train it, then press 1 again.")
+	if class == "MAGE" then
+		-- Key 1 must try the cast even when the name scan misses it. On this
+		-- client the saved buff macro was only Frost Armor, which is free at
+		-- level 1. Arcane Intellect rank 1 is trained and costs 10 copper.
+		local brilliance = book["Arcane Brilliance"] or idListed(bookIds, 23028)
+		if brilliance then
+			spells[#spells + 1] = {
+				spell = "Arcane Brilliance",
+				aura = "Arcane Intellect",
+				intellect = true,
+				trained = true,
+			}
+			seen["Arcane Brilliance"] = true
+		else
+			local trained = book["Arcane Intellect"]
+			if not trained then
+				for i = 1, #INTELLECT_RANKS do
+					if idListed(bookIds, INTELLECT_RANKS[i]) then
+						trained = true
+						break
+					end
+				end
+			end
+			spells[#spells + 1] = {
+				spell = "Arcane Intellect",
+				group = true,
+				aura = "Arcane Intellect",
+				intellect = true,
+				trained = trained or not haveBook,
+			}
+			seen["Arcane Intellect"] = true
 		end
 		if book["Mage Armor"] then
 			pushBuff(spells, seen, "Mage Armor", "self")
 		elseif book["Ice Armor"] then
 			pushBuff(spells, seen, "Ice Armor", "self")
-		elseif book["Frost Armor"] then
+		elseif book["Frost Armor"] or not haveBook then
 			pushBuff(spells, seen, "Frost Armor", "self")
 		end
 		return spells
@@ -314,10 +370,6 @@ function FurySwipes.KnownBuffs(class)
 				end
 			end
 		end
-	end
-	if class == "MAGE" and not haveIntellect and FurySwipes.Print and not FurySwipes.buffWarned then
-		FurySwipes.buffWarned = true
-		FurySwipes.Print("Arcane Intellect is not in the spellbook. Train it, then press 1 again.")
 	end
 	return spells
 end

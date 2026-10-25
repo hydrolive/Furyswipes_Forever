@@ -20,6 +20,10 @@ The Forever addon is written, committed, and copied to `D:\WoWMB\World of Warcra
 
 Newest first.
 
+### 2026-10-24 — Key 1 casts Arcane Intellect on the mage, then the party
+
+Glass Cannon's saved buff macro was still only Frost Armor, so key 1 did nothing once that armor was up. Arcane Intellect was not in that spellbook. Rank 1 is trained (10 copper), unlike free Frost Armor. Key 1 now casts Arcane Intellect on the mage and then on each party member, one press per person, and says so when the spell is not trained. Needs a `/reload`.
+
 ### 2026-10-24 — Mage key 1 skipped Arcane Intellect
 
 Glass Cannon's buff macro only cast Frost Armor. Arcane Intellect is single-target on this client, and a bare `/cast` hits the current target, so an enemy target also blocks it. Key 1 now reads the spellbook and casts Arcane Intellect on the first party member who lacks it, then the mage. The next press applies armor. Needs a `/reload`.

@@ -175,10 +175,9 @@ function FurySwipes.BuffMacro(entries)
 		if entry.nopet then
 			lines[#lines + 1] = "/cast [nopet] " .. entry.spell
 		elseif entry.group then
-			-- One matching clause fires per press. Party members missing the
-			-- buff come first, then the mage. Stays under the 255 character cap.
-			local c = "help,nodead,nobuff:" .. aura
-			lines[#lines + 1] = "/cast [@party1," .. c .. "][@party2," .. c .. "][@party3," .. c .. "][@party4," .. c .. "][@player," .. c .. "] " .. entry.spell
+			-- One person per press. SyncBuffButton rewrites this onto the next
+			-- group member. No nobuff test: a failed aura check was skipping the cast.
+			lines[#lines + 1] = "/cast [@player] " .. entry.spell
 		else
 			-- @player so an enemy target does not eat a self buff.
 			lines[#lines + 1] = "/cast [@player,nobuff:" .. aura .. "] " .. entry.spell
@@ -257,6 +256,101 @@ local function setSmartButton(button, role, healSpell, alwaysHeal, selfCast, dps
 	return setMacroButton(button, fallback)
 end
 
+local function auraPresent(unit, name)
+	if not UnitExists(unit) then return false end
+	if UnitIsConnected and not UnitIsConnected(unit) then return true end
+	if C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName then
+		local ok, aura = pcall(C_UnitAuras.GetAuraDataBySpellName, unit, name, "HELPFUL")
+		if not ok then return nil end
+		if aura and issecretvalue and issecretvalue(aura) then return nil end
+		return aura ~= nil
+	end
+	return nil
+end
+
+local function castMacro(unit, spell)
+	return "#showtooltip " .. spell .. "\n/cast [@" .. unit .. "] " .. spell
+end
+
+local function intellectUnits(party)
+	if not party then return { "player" } end
+	local units = { "player" }
+	if IsInRaid and IsInRaid() then
+		local count = GetNumGroupMembers and GetNumGroupMembers() or 0
+		for i = 1, count do
+			local unit = "raid" .. i
+			if UnitExists(unit) and not UnitIsUnit(unit, "player") then
+				units[#units + 1] = unit
+			end
+		end
+	else
+		for i = 1, 4 do
+			local unit = "party" .. i
+			if UnitExists(unit) then units[#units + 1] = unit end
+		end
+	end
+	local live = {}
+	for i = 1, #units do
+		local unit = units[i]
+		local dead = UnitIsDeadOrGhost and UnitIsDeadOrGhost(unit)
+		local offline = UnitIsConnected and not UnitIsConnected(unit)
+		if not dead and not offline then live[#live + 1] = unit end
+	end
+	if #live == 0 then live[1] = "player" end
+	return live
+end
+
+function FurySwipes.WarnIfIntellectUntrained()
+	local button = _G.FurySwipesBuff
+	if not button or button:GetAttribute("intellectknown") ~= "0" then return end
+	local now = GetTime and GetTime() or 0
+	if FurySwipes._intellectWarnAt and (now - FurySwipes._intellectWarnAt) < 3 then return end
+	FurySwipes._intellectWarnAt = now
+	FurySwipes.Print("Arcane Intellect is not trained. Buy rank 1 from a mage trainer (10 copper), then press 1 again.")
+end
+
+function FurySwipes.SyncBuffButton(advance)
+	if InCombatLockdown and InCombatLockdown() then return end
+	local button = _G.FurySwipesBuff
+	if not button then return end
+	local spell = button:GetAttribute("intellectspell")
+	if type(spell) ~= "string" or spell == "" then return end
+	local units = intellectUnits(button:GetAttribute("intellectparty") == "1")
+	local index = tonumber(button:GetAttribute("buffindex")) or 1
+	local allPresent = true
+	local anyUnknown = false
+	local firstMissing
+	for i = 1, #units do
+		local has = auraPresent(units[i], "Arcane Intellect")
+		if has == nil then
+			anyUnknown = true
+			allPresent = false
+		elseif not has then
+			allPresent = false
+			if not firstMissing then firstMissing = i end
+		end
+	end
+	local targetIndex
+	if allPresent then
+		local armor = button:GetAttribute("armorspell")
+		if type(armor) == "string" and armor ~= "" and auraPresent("player", armor) ~= true then
+			button:SetAttribute("type", "macro")
+			button:SetAttribute("macrotext", castMacro("player", armor))
+			return
+		end
+		targetIndex = 1
+	elseif anyUnknown then
+		if advance then index = index + 1 end
+		if index < 1 or index > #units then index = 1 end
+		targetIndex = index
+	else
+		targetIndex = firstMissing or 1
+	end
+	button:SetAttribute("buffindex", targetIndex)
+	button:SetAttribute("type", "macro")
+	button:SetAttribute("macrotext", castMacro(units[targetIndex], spell))
+end
+
 function FurySwipes.SyncPrimaryHeal()
 	if InCombatLockdown and InCombatLockdown() then return end
 	local button = _G.FurySwipesPrimary
@@ -311,6 +405,12 @@ local buttons = {}
 local function createButtons()
 	if buttons.primary then return end
 	buttons.buff = newSecure("FurySwipesBuff")
+	buttons.buff:HookScript("PreClick", function()
+		FurySwipes.WarnIfIntellectUntrained()
+	end)
+	buttons.buff:HookScript("PostClick", function()
+		FurySwipes.SyncBuffButton(true)
+	end)
 	buttons.primary = newSecure("FurySwipesPrimary")
 	buttons.cleave = newSecure("FurySwipesCleave")
 	buttons.aoe = newSecure("FurySwipesAoe")
@@ -345,7 +445,27 @@ function FurySwipes.RefreshActions()
 	local aoeMacro = FurySwipes.AttackMacro(spells.aoe, cleaveOpts)
 	local healerDamage = FurySwipes.AttackMacro(spells.damage, { startattack = false })
 
-	setMacroButton(buttons.buff, FurySwipes.BuffMacro(FurySwipes.KnownBuffs(class)))
+	local buffs = FurySwipes.KnownBuffs(class)
+	local armorSpell = ""
+	local intellectSpell = ""
+	local intellectParty = "0"
+	local intellectKnown = "1"
+	for i = 1, #buffs do
+		local entry = buffs[i]
+		if entry.intellect then
+			intellectSpell = entry.spell or ""
+			intellectParty = entry.group and "1" or "0"
+			intellectKnown = entry.trained == false and "0" or "1"
+		elseif not entry.nopet and not entry.group then
+			armorSpell = entry.spell
+		end
+	end
+	setMacroButton(buttons.buff, FurySwipes.BuffMacro(buffs))
+	buttons.buff:SetAttribute("armorspell", armorSpell)
+	buttons.buff:SetAttribute("intellectspell", intellectSpell)
+	buttons.buff:SetAttribute("intellectparty", intellectParty)
+	buttons.buff:SetAttribute("intellectknown", intellectKnown)
+	FurySwipes.SyncBuffButton()
 	setMacroButton(buttons.assist, FurySwipes.AttackMacro(nil, { startattack = false }))
 	setMacroButton(buttons.follow, FurySwipes.FollowMacro(false))
 	setMacroButton(buttons.stick, FurySwipes.FollowMacro(true))

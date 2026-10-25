@@ -185,6 +185,7 @@ frame:RegisterEvent("SPELLS_CHANGED")
 frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 frame:RegisterEvent("UNIT_HEALTH")
 frame:RegisterEvent("UNIT_MAXHEALTH")
+frame:RegisterEvent("UNIT_AURA")
 
 frame:SetScript("OnEvent", function(_, event, arg1)
 	if event == "ADDON_LOADED" then
@@ -202,10 +203,20 @@ frame:SetScript("OnEvent", function(_, event, arg1)
 			FurySwipes.Refresh()
 		else
 			FurySwipes.SyncPrimaryHeal()
+			FurySwipes.SyncBuffButton()
 		end
 		return
 	end
-	if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" or event == "GROUP_ROSTER_UPDATE" then
+	if event == "UNIT_AURA" or event == "GROUP_ROSTER_UPDATE" then
+		if not InCombatLockdown or not InCombatLockdown() then
+			FurySwipes.SyncBuffButton()
+		end
+		if event == "GROUP_ROSTER_UPDATE" and (not InCombatLockdown or not InCombatLockdown()) then
+			FurySwipes.SyncPrimaryHeal()
+		end
+		return
+	end
+	if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
 		if not InCombatLockdown or not InCombatLockdown() then
 			FurySwipes.SyncPrimaryHeal()
 		end

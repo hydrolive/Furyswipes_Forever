@@ -22,7 +22,7 @@ OpenMultiBoxing delivers the same key to every window. The secure button in that
 | Key | Feature | Status |
 | --- | --- | --- |
 | `/fs init` and Ctrl-I | Bind the keys and rebuild macros | unverified |
-| 1 | Buffs. A mage casts Arcane Intellect on each unbuffed party member, then armor | unverified |
+| 1 | Buffs. A mage casts Arcane Intellect on self, then each party member, one press each, then armor. Pressing 1 says to train it when the spellbook does not have it | unverified |
 | 2 | Attack, or heal when someone is under the roster thresholds | unverified |
 | 3 | Cleave, or a group heal on a healer | unverified |
 | 4 | Assist the leader | unverified |
