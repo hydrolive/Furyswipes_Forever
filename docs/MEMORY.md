@@ -41,8 +41,7 @@ Class defaults: warrior tank; rogue, death knight, monk, demon hunter melee; hun
 
 - `/click Button` from a macro does nothing on this client. Bind `CLICK ButtonName:LeftButton` with `SetBinding`, then `SaveBindings`.
 - `header:WrapScript(frame, script, body)` is the method form used by Forever addons. Wrapping a button with itself is `button:WrapScript(button, "PreClick", body)`. The global form is `SecureHandlerWrapScript(frame, script, header, body)`.
-- The secure PreClick snippet cannot define a function, cannot `return` (that can swallow the click), and cannot call `UnitName` (secret strings). Key 2 heals the most injured living group member who is missing any health. It casts the damage spell only after health was read and everyone is full. A failed or secret health read stays on the heal. Out of combat, `SyncPrimaryHeal` sets the same choice from real numbers. The self and tank roster fractions only choose who is healed first. Keys 3 and 5 always heal.
-- If `WrapScript` fails, the healer button keeps a party-order `/cast` macro.
+- The secure PreClick snippet cannot define a function, cannot `return` (that can swallow the click), and cannot call `UnitName` (secret strings). Heal clicks pick the lowest health living group member. They do not prefer the tank or the group leader. On a follower, `party1` is the leader, so a `/cast [@party1][@party2]...` macro always heals the leader. Key 2 casts the damage spell only after health was read and everyone is full. Out of combat, `SyncPrimaryHeal` sets the same unit. Keys 3 and 5 use the same target when their spell is single-target. A self-cast area heal stays on the healer.
 - Do not test `[noexists]` or `[noharm]` on attack macros. Untargeted self-cast AoE must still fire. `/stopmacro [help]` is the friendly-assist stop.
 - Ground-targeted spells are omitted. A broadcast key cannot place a reticle in every window.
 - A `/cast` stops `/follow`.

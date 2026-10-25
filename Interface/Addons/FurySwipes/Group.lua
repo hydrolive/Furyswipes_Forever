@@ -278,12 +278,14 @@ function FurySwipes.TankToken()
 	end
 end
 
--- Unit id that should be healed, nil when every living member is full,
--- or "secret" when this client will not let Lua compare health.
+-- Unit id of the lowest health living member, nil when every living member is
+-- full, or "secret" when this client will not let Lua compare health.
+-- The group leader is not preferred. On a follower, party1 is that leader.
 function FurySwipes.HurtTarget()
-	local tankAt, _, selfAt = FurySwipes.HealFractions()
 	local function pct(unit)
 		if not UnitExists(unit) then return nil end
+		if UnitIsConnected and not UnitIsConnected(unit) then return nil end
+		if UnitIsDeadOrGhost and UnitIsDeadOrGhost(unit) then return nil end
 		local hp, maxh = UnitHealth(unit), UnitHealthMax(unit)
 		if issecretvalue and (issecretvalue(hp) or issecretvalue(maxh)) then
 			return nil, true
@@ -299,22 +301,17 @@ function FurySwipes.HurtTarget()
 	else
 		for i = 1, 4 do units[#units + 1] = "party" .. i end
 	end
-	local playerPct, tankPct, best, bestPct
-	local tankUnit = FurySwipes.TankToken()
+	local best, bestPct
 	for i = 1, #units do
 		local unit = units[i]
-		local p, hidden = pct(unit)
-		if hidden then return "secret" end
-		if p then
-			if unit == "player" then playerPct = p end
-			if tankUnit and unit == tankUnit then tankPct = p end
-			if bestPct == nil or p < bestPct then
+		if unit == "player" or not (UnitIsUnit and UnitIsUnit(unit, "player")) then
+			local p, hidden = pct(unit)
+			if hidden then return "secret" end
+			if p and (bestPct == nil or p < bestPct) then
 				best, bestPct = unit, p
 			end
 		end
 	end
-	if playerPct ~= nil and playerPct < 1 and playerPct <= selfAt then return "player" end
-	if tankPct ~= nil and tankUnit and tankPct < 1 and tankPct <= tankAt then return tankUnit end
 	if bestPct ~= nil and bestPct < 1 then return best end
 end
 

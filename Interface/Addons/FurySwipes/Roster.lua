@@ -6,10 +6,8 @@
 -- leader is the character you play on the main OpenMultiBoxing window.
 -- The others assist and follow that name.
 --
--- heal fractions are 0 to 1. Key 2 heals anyone who is missing health.
---   self - the healer is healed first at or below this
---   tank - the tank is healed first at or below this
---   party - kept for older builds. Missing health is enough to heal.
+-- Key 2 heals the lowest health group member who is missing health.
+-- It does not prefer the tank or the group leader.
 
 FurySwipesRoster = {
 	leader = "Grim Reaper",

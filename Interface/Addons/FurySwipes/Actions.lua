@@ -25,51 +25,44 @@ FurySwipes.KEYS = {
 
 -- Compiled once. No function definitions and no return: the secure environment
 -- rejects both, and a return from PreClick can swallow the click.
--- Key 2 starts on a party heal. Damage is used only after health was read and
--- everybody is full. A failed health read stays on the heal.
+-- Picks the lowest health group member. No tank or party1 preference:
+-- party1 on a follower is the group leader, and a party-order /cast hits them first.
 FurySwipes.HEAL_SNIPPET = [[
-self:SetAttribute("type", "macro")
-self:SetAttribute("macrotext", self:GetAttribute("dpsmacro") or "")
 local heal = self:GetAttribute("healspell")
-if heal and heal ~= "" then
-  if self:GetAttribute("alwaysheal") then
-    local hm = self:GetAttribute("healmacro")
-    if hm and hm ~= "" then
-      self:SetAttribute("macrotext", hm)
+if self:GetAttribute("selfcast") then
+  local hm = self:GetAttribute("healmacro")
+  if hm and hm ~= "" then
+    self:SetAttribute("type", "macro")
+    self:SetAttribute("macrotext", hm)
+  end
+elseif heal and heal ~= "" then
+  local best, bestPct
+  local u, hp, maxh, pct
+  for i = 0, 44 do
+    if i == 0 then
+      u = "player"
+    elseif i < 5 then
+      u = "party" .. i
+    else
+      u = "raid" .. (i - 4)
     end
-  else
-    local hm = self:GetAttribute("healmacro")
-    if hm and hm ~= "" then
-      self:SetAttribute("macrotext", hm)
-    end
-    local selfAt = self:GetAttribute("selfat") or 0.30
-    local tankAt = self:GetAttribute("tankat") or 0.50
-    local tankUnit = self:GetAttribute("tankunit") or ""
-    local playerPct
-    local tankPct
-    local best, bestPct
-    local u, hp, maxh, pct
-    for i = 0, 44 do
-      if i == 0 then
-        u = "player"
-      elseif i < 5 then
-        u = "party" .. i
-      else
-        u = "raid" .. (i - 4)
-      end
-      if UnitExists(u) then
-        hp = UnitHealth(u)
-        maxh = UnitHealthMax(u)
-        if hp ~= nil then
-          if maxh ~= nil then
-            if maxh > 0 then
-              if hp > 0 then
-                pct = hp / maxh
-                if u == "player" then playerPct = pct end
-                if tankUnit ~= "" and u == tankUnit then tankPct = pct end
-                if bestPct == nil or pct < bestPct then
-                  best = u
-                  bestPct = pct
+    if UnitExists(u) then
+      if UnitIsConnected(u) then
+        if not UnitIsDeadOrGhost(u) then
+          hp = UnitHealth(u)
+          maxh = UnitHealthMax(u)
+          if hp ~= nil then
+            if maxh ~= nil then
+              if maxh > 0 then
+                if hp > 0 then
+                  pct = hp / maxh
+                  if bestPct == nil then
+                    best = u
+                    bestPct = pct
+                  elseif pct < bestPct then
+                    best = u
+                    bestPct = pct
+                  end
                 end
               end
             end
@@ -77,32 +70,25 @@ if heal and heal ~= "" then
         end
       end
     end
-    local unit
-    if playerPct ~= nil then
-      if playerPct <= selfAt then unit = "player" end
-    end
-    if not unit then
-      if tankPct ~= nil then
-        if tankPct <= tankAt then
-          if tankUnit ~= "" then unit = tankUnit end
-        end
-      end
-    end
-    if not unit then
-      if bestPct ~= nil then
-        if bestPct < 1 then unit = best end
-      end
-    end
-    if unit then
+  end
+  if best then
+    if self:GetAttribute("alwaysheal") then
       self:SetAttribute("type", "spell")
-      self:SetAttribute("unit", unit)
+      self:SetAttribute("unit", best)
       self:SetAttribute("spell", heal)
-    else
-      if playerPct ~= nil or bestPct ~= nil then
+    elseif bestPct ~= nil then
+      if bestPct < 1 then
+        self:SetAttribute("type", "spell")
+        self:SetAttribute("unit", best)
+        self:SetAttribute("spell", heal)
+      else
         self:SetAttribute("type", "macro")
         self:SetAttribute("macrotext", self:GetAttribute("dpsmacro") or "")
       end
     end
+  else
+    self:SetAttribute("type", "macro")
+    self:SetAttribute("macrotext", self:GetAttribute("dpsmacro") or "")
   end
 end
 ]]
@@ -198,13 +184,6 @@ function FurySwipes.BuffMacro(entries)
 	return table.concat(lines, "\n")
 end
 
-function FurySwipes.PartyHealMacro(spell)
-	return table.concat({
-		"#showtooltip " .. spell,
-		"/cast [@party1,help,nodead][@party2,help,nodead][@party3,help,nodead][@party4,help,nodead][@player] " .. spell,
-	}, "\n")
-end
-
 local function utilityMacro(spell, kind)
 	if not spell then return "#showtooltip\n# FurySwipes: no taunt, dispel, or interrupt for this class" end
 	if kind == "dispel" then
@@ -242,26 +221,32 @@ local function setSmartButton(button, role, healSpell, alwaysHeal, selfCast, dps
 	button:SetAttribute("tankat", tankAt)
 	button:SetAttribute("partyat", partyAt)
 	button:SetAttribute("selfat", selfAt)
-	-- Key 2 rests on a party heal until health says everyone is full. Keys 3 and
-	-- 5 always heal.
-	local fallback = dpsMacro or ""
-	local healMacro = fallback
-	if role == "healer" and healSpell then
-		if selfCast then
-			healMacro = "#showtooltip " .. healSpell .. "\n/cast " .. healSpell
-		else
-			healMacro = FurySwipes.PartyHealMacro(healSpell)
-		end
-		if alwaysHeal or not selfCast then fallback = healMacro end
+	-- Single-target heals go through the snippet, which picks the lowest health
+	-- member. A party-order macro always hits party1, and that is the leader.
+	local healMacro = ""
+	if role == "healer" and healSpell and selfCast then
+		healMacro = "#showtooltip " .. healSpell .. "\n/cast " .. healSpell
 	end
 	button:SetAttribute("healmacro", healMacro)
 	button:SetAttribute("tankunit", (FurySwipes.TankToken and FurySwipes.TankToken()) or "")
-	if role == "healer" and healSpell and not alwaysHeal and ensureWrap(button) then
-		button:SetAttribute("type", "macro")
-		button:SetAttribute("macrotext", dpsMacro or "")
+	if role == "healer" and healSpell and not selfCast and ensureWrap(button) then
+		button:SetAttribute("type", "spell")
+		button:SetAttribute("spell", healSpell)
+		button:SetAttribute("unit", "player")
+		if not alwaysHeal then
+			button:SetAttribute("type", "macro")
+			button:SetAttribute("macrotext", dpsMacro or "")
+		end
 		return true
 	end
-	return setMacroButton(button, fallback)
+	if healMacro ~= "" then return setMacroButton(button, healMacro) end
+	if role == "healer" and healSpell and not selfCast then
+		button:SetAttribute("type", "spell")
+		button:SetAttribute("spell", healSpell)
+		button:SetAttribute("unit", "player")
+		return true
+	end
+	return setMacroButton(button, dpsMacro or "")
 end
 
 local function auraPresent(unit, name)
@@ -368,27 +353,31 @@ end
 
 function FurySwipes.SyncPrimaryHeal()
 	if InCombatLockdown and InCombatLockdown() then return end
-	local button = _G.FurySwipesPrimary
-	if not button or button:GetAttribute("role") ~= "healer" then return end
-	if button:GetAttribute("alwaysheal") then return end
-	local heal = button:GetAttribute("healspell")
-	local dps = button:GetAttribute("dpsmacro") or ""
-	button:SetAttribute("tankunit", (FurySwipes.TankToken and FurySwipes.TankToken()) or "")
 	local ok, hurt = pcall(FurySwipes.HurtTarget)
-	local partyHeal = button:GetAttribute("healmacro") or ""
-	if not ok or hurt == "secret" or not heal or heal == "" then
+	local function apply(button)
+		if not button or button:GetAttribute("role") ~= "healer" then return end
+		if button:GetAttribute("selfcast") then return end
+		local heal = button:GetAttribute("healspell")
+		if not heal or heal == "" then return end
+		if not ok or hurt == "secret" then return end
+		if hurt then
+			button:SetAttribute("type", "spell")
+			button:SetAttribute("spell", heal)
+			button:SetAttribute("unit", hurt)
+			return
+		end
+		if button:GetAttribute("alwaysheal") then
+			button:SetAttribute("type", "spell")
+			button:SetAttribute("spell", heal)
+			button:SetAttribute("unit", "player")
+			return
+		end
 		button:SetAttribute("type", "macro")
-		button:SetAttribute("macrotext", (partyHeal ~= "" and partyHeal) or dps)
-		return
+		button:SetAttribute("macrotext", button:GetAttribute("dpsmacro") or "")
 	end
-	if not hurt then
-		button:SetAttribute("type", "macro")
-		button:SetAttribute("macrotext", dps)
-		return
-	end
-	button:SetAttribute("type", "spell")
-	button:SetAttribute("spell", heal)
-	button:SetAttribute("unit", hurt)
+	apply(_G.FurySwipesPrimary)
+	apply(_G.FurySwipesCleave)
+	apply(_G.FurySwipesAoe)
 end
 
 local function macroSlots()

@@ -20,6 +20,10 @@ The Forever addon is written, committed, and copied to `D:\WoWMB\World of Warcra
 
 Newest first.
 
+### 2026-10-25 — Healer kept healing the group leader
+
+The heal macro was `/cast [@party1][@party2]...`. On the other characters `party1` is the group leader, so the lowest health member never received the cast. Tank priority could also force the leader. Key 2 and key 3 now cast on the lowest health living group member. Needs a `/reload`.
+
 ### 2026-10-24 — Healer key 2 stayed on Smite
 
 Im Oom's key 2 macro was Smite unless someone was at 33% or below, so a hurt group got no heal. Key 2 now heals the most injured person who is missing health, and casts Smite only when everyone is full. If health cannot be read, it heals. Needs a `/reload`.

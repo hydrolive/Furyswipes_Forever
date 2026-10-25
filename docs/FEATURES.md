@@ -24,7 +24,7 @@ OpenMultiBoxing delivers the same key to every window. The secure button in that
 | `/fs init` and Ctrl-I | Bind the keys and rebuild macros | unverified |
 | 1 | Buffs. A mage casts Arcane Intellect, and a priest casts Power Word: Fortitude, on self then each party member, one press each. Pressing 1 says to train the spell when the spellbook does not have it | unverified |
 | 2 | Attack, or heal the most injured person who is missing health | unverified |
-| 3 | Cleave, or a group heal on a healer | unverified |
+| 3 | Cleave, or a heal on the lowest health group member | unverified |
 | 4 | Assist the leader | unverified |
 | 5 | Area attack, or an area heal on a healer | unverified |
 | 0 | Leader invites the roster. Other windows accept | unverified |
@@ -33,7 +33,7 @@ OpenMultiBoxing delivers the same key to every window. The secure button in that
 | Alt-4 | Assist, then follow | unverified |
 | `/fs unbind` | Remove only bindings that are still ours | unverified |
 
-Key 2 heals anyone who is missing health, and attacks when everyone is full. If health cannot be read, it still heals. Keys 3 and 5 still heal on purpose.
+Key 2 and key 3 heal the lowest health group member. They do not prefer the group leader. Key 2 attacks when everyone is full. Key 5 does the same unless the healer has a self-cast area heal.
 
 Shift-1 dispel is `partial` because mouseover is not broadcast. Clone windows dispel by party order.
 
