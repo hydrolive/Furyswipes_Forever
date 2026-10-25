@@ -1,0 +1,14 @@
+## Interface: 16001
+## Title: FurySwipes
+## Notes: Role-aware multiboxing for WoW Forever. OpenMultiBoxing broadcasts the keys. This addon decides what each character does.
+## Author: Furyswipes
+## Version: 1.0.0
+## SavedVariables: FurySwipesDB
+## SavedVariablesPerCharacter: FurySwipesChar
+## DefaultState: enabled
+
+Roster.lua
+Spells.lua
+Group.lua
+Actions.lua
+Core.lua

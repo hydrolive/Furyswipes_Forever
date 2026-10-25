@@ -1,0 +1,250 @@
+-- Party invites, accept, and follow/assist text.
+-- InviteUnit and AcceptGroup match the calls the Forever MAMA addon uses on this client.
+
+FurySwipes = FurySwipes or {}
+
+local inviteGen = 0
+
+local function me()
+	return UnitName("player")
+end
+
+local function same(a, b)
+	if not a or not b then return false end
+	if a:lower() == b:lower() then return true end
+	-- Roster names are stored without a realm. UnitName sometimes returns Name-Realm.
+	if a:find("-", 1, true) and b:find("-", 1, true) then return false end
+	local ashort = a:match("^([^%-]+)")
+	local bshort = b:match("^([^%-]+)")
+	return ashort and bshort and ashort:lower() == bshort:lower()
+end
+
+function FurySwipes.LeaderName()
+	local roster = FurySwipesRoster
+	if not roster or not roster.leader or roster.leader == "" then return nil end
+	return roster.leader
+end
+
+function FurySwipes.IsLeader()
+	return same(FurySwipes.LeaderName(), me())
+end
+
+function FurySwipes.Members()
+	local out = {}
+	local roster = FurySwipesRoster
+	if not roster or not roster.members then return out end
+	for i = 1, #roster.members do
+		local member = roster.members[i]
+		if type(member) == "table" and type(member.name) == "string" and member.name ~= "" then
+			local role = type(member.role) == "string" and member.role:lower() or nil
+			out[#out + 1] = { name = member.name, role = role }
+		end
+	end
+	return out
+end
+
+function FurySwipes.RosterRole(name)
+	if not name then return nil end
+	local members = FurySwipes.Members()
+	for i = 1, #members do
+		if same(members[i].name, name) then return members[i].role end
+	end
+end
+
+function FurySwipes.OnRoster(name)
+	return FurySwipes.RosterRole(name) ~= nil or same(FurySwipes.LeaderName(), name)
+end
+
+function FurySwipes.HealFractions()
+	local heal = FurySwipesRoster and FurySwipesRoster.heal or nil
+	heal = heal or {}
+	return heal.tank or 0.50, heal.party or 0.33, heal.self or 0.30
+end
+
+function FurySwipes.InGroup(name)
+	if not name then return false end
+	if same(name, me()) then return true end
+	if not IsInGroup or not IsInGroup() then return false end
+	if IsInRaid() then
+		for i = 1, GetNumGroupMembers() do
+			if same(UnitName("raid" .. i), name) then return true end
+		end
+		return false
+	end
+	for i = 1, 4 do
+		if same(UnitName("party" .. i), name) then return true end
+	end
+	return false
+end
+
+function FurySwipes.SafeName(name)
+	if type(name) ~= "string" then return nil end
+	-- Keep accented letters. Only strip characters that would break a /follow line.
+	local clean = name:gsub("[\r\n|;]", "")
+	if clean == "" then return nil end
+	return clean
+end
+
+local function inviteOne(name)
+	if C_PartyInfo and C_PartyInfo.InviteUnit then
+		C_PartyInfo.InviteUnit(name)
+		return true
+	end
+	if InviteUnit then
+		InviteUnit(name)
+		return true
+	end
+	return false
+end
+
+local function afterInvites()
+	if not FurySwipes.IsLeader() or not IsInGroup or not IsInGroup() then return end
+	if C_PartyInfo and C_PartyInfo.SetLootMethod then
+		pcall(C_PartyInfo.SetLootMethod, "freeforall")
+	elseif SetLootMethod then
+		pcall(SetLootMethod, "freeforall", me())
+	end
+	local members = FurySwipes.Members()
+	if #members <= 5 or IsInRaid() then return end
+	if GetNumGroupMembers() >= 5 and UnitIsGroupLeader("player") and C_PartyInfo and C_PartyInfo.ConvertToRaid then
+		C_PartyInfo.ConvertToRaid()
+	end
+end
+
+function FurySwipes.InviteRoster()
+	if not FurySwipes.IsLeader() then
+		FurySwipes.Print("Only " .. (FurySwipes.LeaderName() or "the roster leader") .. " sends invites. This window accepts them.")
+		return
+	end
+	if InCombatLockdown and InCombatLockdown() then
+		FurySwipes.Print("Leave combat before inviting.")
+		return
+	end
+	local pending = {}
+	local members = FurySwipes.Members()
+	for i = 1, #members do
+		local name = FurySwipes.SafeName(members[i].name)
+		if name and not same(name, me()) and not FurySwipes.InGroup(name) then
+			pending[#pending + 1] = name
+		end
+	end
+	if #pending == 0 then
+		FurySwipes.Print("Everyone on the roster is already in the group, or the roster is empty.")
+		afterInvites()
+		return
+	end
+	inviteGen = inviteGen + 1
+	local gen = inviteGen
+	local index = 0
+	local function step()
+		if gen ~= inviteGen then return end
+		index = index + 1
+		local name = pending[index]
+		if not name then
+			afterInvites()
+			if C_Timer and C_Timer.After then C_Timer.After(1.5, afterInvites) end
+			return
+		end
+		if not FurySwipes.InGroup(name) then
+			if inviteOne(name) then
+				FurySwipes.Print("Inviting " .. name .. ".")
+			else
+				FurySwipes.Print("This client has no invite function.")
+				return
+			end
+		end
+		if C_Timer and C_Timer.After then
+			C_Timer.After(0.35, step)
+		else
+			step()
+		end
+	end
+	FurySwipes.Print("Inviting " .. #pending .. " character(s). They need to be online.")
+	step()
+end
+
+function FurySwipes.AcceptInvite()
+	if AcceptGroup then AcceptGroup() end
+	if StaticPopup_Hide then StaticPopup_Hide("PARTY_INVITE") end
+end
+
+function FurySwipes.OnPartyInvite(inviter)
+	local roster = FurySwipesRoster
+	local allow = not roster or roster.autoAccept ~= false
+	if allow and FurySwipes.OnRoster(inviter) then
+		FurySwipes.AcceptInvite()
+		FurySwipes.Print("Accepted a group invite from " .. tostring(inviter) .. ".")
+	end
+end
+
+function FurySwipes.InviteOrAccept()
+	if StaticPopup_Visible and StaticPopup_Visible("PARTY_INVITE") then
+		FurySwipes.AcceptInvite()
+		return
+	end
+	if FurySwipes.IsLeader() then
+		FurySwipes.InviteRoster()
+	else
+		FurySwipes.AcceptInvite()
+		FurySwipes.Print("Waiting for an invite from " .. (FurySwipes.LeaderName() or "the leader") .. ". Press 0 on the leader to send them.")
+	end
+end
+
+function FurySwipes.LeaveGroup()
+	if C_PartyInfo and C_PartyInfo.LeaveParty then
+		C_PartyInfo.LeaveParty()
+	elseif LeaveParty then
+		LeaveParty()
+	end
+end
+
+function FurySwipes.ConvertToRaid()
+	if not UnitIsGroupLeader or not UnitIsGroupLeader("player") then
+		FurySwipes.Print("You need to be the group leader to convert to a raid.")
+		return
+	end
+	if C_PartyInfo and C_PartyInfo.ConvertToRaid then
+		C_PartyInfo.ConvertToRaid()
+	end
+end
+
+function FurySwipes.ApplyBlizzardRole(role)
+	if not UnitSetRole then return end
+	local map = {
+		tank = "TANK",
+		healer = "HEALER",
+		melee = "DAMAGER",
+		caster = "DAMAGER",
+		hunter = "DAMAGER",
+	}
+	local token = map[role]
+	if not token then return end
+	-- Best-effort. Some builds only accept this inside a group, and some ignore it.
+	-- Heal priority uses TANK from UnitGroupRolesAssigned when the client has it.
+	pcall(UnitSetRole, "player", token)
+end
+
+function FurySwipes.UnitToken(name)
+	if not name then return nil end
+	if same(name, me()) then return "player" end
+	if IsInRaid and IsInRaid() then
+		for i = 1, GetNumGroupMembers() do
+			if same(UnitName("raid" .. i), name) then return "raid" .. i end
+		end
+		return nil
+	end
+	for i = 1, 4 do
+		if same(UnitName("party" .. i), name) then return "party" .. i end
+	end
+end
+
+function FurySwipes.FollowMacro(andAssist)
+	local leader = FurySwipes.SafeName(FurySwipes.LeaderName())
+	if not leader or FurySwipes.IsLeader() then
+		return "#showtooltip\n/stopfollow"
+	end
+	if andAssist then
+		return "#showtooltip\n/assist " .. leader .. "\n/follow " .. leader
+	end
+	return "#showtooltip\n/follow " .. leader
+end

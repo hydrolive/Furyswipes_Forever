@@ -1,7 +1,0 @@
-﻿## Interface: 11200
-## Title: Postal
-## Notes: Postal
-## Author: shirsig
-## SavedVariablesPerCharacter: Postal_To
-## SavedVariables: Postal_Characters
-Postal.xml

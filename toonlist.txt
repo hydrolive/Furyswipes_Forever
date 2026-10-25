@@ -1,5 +1,9 @@
-# This is your toonlist--it contains your info for each account.
-# Make a box command for each window you want to open.
+# UNUSED by the Forever / OpenMultiBoxing setup.
+# Character names and roles now live in:
+#   Interface\AddOns\FurySwipes\Roster.lua
+# Do not put passwords in the addon. See README.md.
+#
+# The lines below are the old HotkeyNet toonlist and are not read anymore.
 # FORMAT:
 # box <wowaccount> <password> <name of toon> <role> <one or more raidletters>
 #
