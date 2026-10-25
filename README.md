@@ -73,7 +73,7 @@ OpenMultiBoxing's own hotkeys (Ctrl-F1, Ctrl-Shift-N, and the rest) are not game
 | Key | What happens |
 | --- | --- |
 | 1 | Buffs, one person per press. A mage casts Arcane Intellect, and a priest casts Power Word: Fortitude, on self and then on each party member who lacks it. The next press applies armor or Inner Fire. If that buff is not trained, key 1 says so. Warlocks and hunters also summon a pet. |
-| 2 | Main action. Damage roles assist the leader and cast. Healers heal if someone is under the roster thresholds, otherwise they cast a damage spell. |
+| 2 | Main action. Damage roles assist the leader and cast. Healers heal the most injured person who is missing health, and cast a damage spell when everyone is full. |
 | 3 | Cleave, or a group heal on a healer. |
 | 4 | Assist the leader. |
 | 5 | Area spell, or an area heal on a healer. |

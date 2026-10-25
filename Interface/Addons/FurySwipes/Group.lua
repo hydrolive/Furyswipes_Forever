@@ -89,7 +89,7 @@ end
 function FurySwipes.HealFractions()
 	local heal = FurySwipesRoster and FurySwipesRoster.heal or nil
 	heal = heal or {}
-	return heal.tank or 0.50, heal.party or 0.33, heal.self or 0.30
+	return heal.tank or 0.50, heal.party or 1, heal.self or 0.30
 end
 
 function FurySwipes.InGroup(name)
@@ -278,10 +278,10 @@ function FurySwipes.TankToken()
 	end
 end
 
--- Unit id that should be healed, nil when everyone is above the thresholds,
+-- Unit id that should be healed, nil when every living member is full,
 -- or "secret" when this client will not let Lua compare health.
 function FurySwipes.HurtTarget()
-	local tankAt, partyAt, selfAt = FurySwipes.HealFractions()
+	local tankAt, _, selfAt = FurySwipes.HealFractions()
 	local function pct(unit)
 		if not UnitExists(unit) then return nil end
 		local hp, maxh = UnitHealth(unit), UnitHealthMax(unit)
@@ -313,9 +313,9 @@ function FurySwipes.HurtTarget()
 			end
 		end
 	end
-	if playerPct ~= nil and playerPct <= selfAt then return "player" end
-	if tankPct ~= nil and tankUnit and tankPct <= tankAt then return tankUnit end
-	if bestPct ~= nil and bestPct <= partyAt then return best end
+	if playerPct ~= nil and playerPct < 1 and playerPct <= selfAt then return "player" end
+	if tankPct ~= nil and tankUnit and tankPct < 1 and tankPct <= tankAt then return tankUnit end
+	if bestPct ~= nil and bestPct < 1 then return best end
 end
 
 function FurySwipes.FollowMacro(andAssist)

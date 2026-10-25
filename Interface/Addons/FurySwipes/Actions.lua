@@ -25,8 +25,8 @@ FurySwipes.KEYS = {
 
 -- Compiled once. No function definitions and no return: the secure environment
 -- rejects both, and a return from PreClick can swallow the click.
--- Starts on the damage macro. A heal is applied only when someone is at or
--- under the thresholds, so a snippet error cannot leave an unconditional heal.
+-- Key 2 starts on a party heal. Damage is used only after health was read and
+-- everybody is full. A failed health read stays on the heal.
 FurySwipes.HEAL_SNIPPET = [[
 self:SetAttribute("type", "macro")
 self:SetAttribute("macrotext", self:GetAttribute("dpsmacro") or "")
@@ -38,9 +38,12 @@ if heal and heal ~= "" then
       self:SetAttribute("macrotext", hm)
     end
   else
+    local hm = self:GetAttribute("healmacro")
+    if hm and hm ~= "" then
+      self:SetAttribute("macrotext", hm)
+    end
     local selfAt = self:GetAttribute("selfat") or 0.30
     local tankAt = self:GetAttribute("tankat") or 0.50
-    local partyAt = self:GetAttribute("partyat") or 0.33
     local tankUnit = self:GetAttribute("tankunit") or ""
     local playerPct
     local tankPct
@@ -87,13 +90,18 @@ if heal and heal ~= "" then
     end
     if not unit then
       if bestPct ~= nil then
-        if bestPct <= partyAt then unit = best end
+        if bestPct < 1 then unit = best end
       end
     end
     if unit then
       self:SetAttribute("type", "spell")
       self:SetAttribute("unit", unit)
       self:SetAttribute("spell", heal)
+    else
+      if playerPct ~= nil or bestPct ~= nil then
+        self:SetAttribute("type", "macro")
+        self:SetAttribute("macrotext", self:GetAttribute("dpsmacro") or "")
+      end
     end
   end
 end
@@ -234,17 +242,17 @@ local function setSmartButton(button, role, healSpell, alwaysHeal, selfCast, dps
 	button:SetAttribute("tankat", tankAt)
 	button:SetAttribute("partyat", partyAt)
 	button:SetAttribute("selfat", selfAt)
-	-- Key 2 (not alwaysHeal) rests on the damage macro. Keys 3 and 5 rest on a
-	-- heal because those keys are supposed to heal even at full health.
+	-- Key 2 rests on a party heal until health says everyone is full. Keys 3 and
+	-- 5 always heal.
 	local fallback = dpsMacro or ""
 	local healMacro = fallback
-	if role == "healer" and healSpell and (alwaysHeal or selfCast) then
+	if role == "healer" and healSpell then
 		if selfCast then
 			healMacro = "#showtooltip " .. healSpell .. "\n/cast " .. healSpell
 		else
 			healMacro = FurySwipes.PartyHealMacro(healSpell)
 		end
-		if alwaysHeal then fallback = healMacro end
+		if alwaysHeal or not selfCast then fallback = healMacro end
 	end
 	button:SetAttribute("healmacro", healMacro)
 	button:SetAttribute("tankunit", (FurySwipes.TankToken and FurySwipes.TankToken()) or "")
@@ -367,7 +375,13 @@ function FurySwipes.SyncPrimaryHeal()
 	local dps = button:GetAttribute("dpsmacro") or ""
 	button:SetAttribute("tankunit", (FurySwipes.TankToken and FurySwipes.TankToken()) or "")
 	local ok, hurt = pcall(FurySwipes.HurtTarget)
-	if not ok or hurt == "secret" or not hurt or not heal or heal == "" then
+	local partyHeal = button:GetAttribute("healmacro") or ""
+	if not ok or hurt == "secret" or not heal or heal == "" then
+		button:SetAttribute("type", "macro")
+		button:SetAttribute("macrotext", (partyHeal ~= "" and partyHeal) or dps)
+		return
+	end
+	if not hurt then
 		button:SetAttribute("type", "macro")
 		button:SetAttribute("macrotext", dps)
 		return

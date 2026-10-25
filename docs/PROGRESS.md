@@ -20,6 +20,10 @@ The Forever addon is written, committed, and copied to `D:\WoWMB\World of Warcra
 
 Newest first.
 
+### 2026-10-24 — Healer key 2 stayed on Smite
+
+Im Oom's key 2 macro was Smite unless someone was at 33% or below, so a hurt group got no heal. Key 2 now heals the most injured person who is missing health, and casts Smite only when everyone is full. If health cannot be read, it heals. Needs a `/reload`.
+
 ### 2026-10-24 — Priest key 1 did not cast Power Word: Fortitude
 
 Im Oom's buff macro was `/cast [@player,nobuff:Power Word: Fortitude] Power Word: Fortitude`. That condition does not cast, and it never aimed at the party. Key 1 now casts Fortitude on the priest, then on each party member, one press per person. Prayer of Fortitude, at level 48, is the one-cast group version. Needs a `/reload`.
