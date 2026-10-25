@@ -20,7 +20,7 @@ FurySwipesRoster = {
 	members = {
 		{ name = "Grim Reaper", role = "tank" },
 		{ name = "Glass Cannon", role = "caster" },
-		{ name = "Free Range", role = "hunter" },
+		{ name = "Free Range", role = "melee" },
 		{ name = "Bad Omen", role = "melee" },
 		{ name = "Im Oom", role = "healer" },
 	},

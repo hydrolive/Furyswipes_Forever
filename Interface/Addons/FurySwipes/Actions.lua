@@ -168,6 +168,9 @@ function FurySwipes.BuffMacro(entries)
 		local aura = entry.aura or entry.spell
 		if entry.nopet then
 			lines[#lines + 1] = "/cast [nopet] " .. entry.spell
+		elseif entry.weapon then
+			lines[#lines + 1] = "/cast " .. entry.spell
+			lines[#lines + 1] = "/use 16"
 		elseif entry.group then
 			-- One person per press. SyncBuffButton rewrites this onto the next
 			-- group member. No nobuff test: a failed aura check was skipping the cast.
@@ -265,6 +268,43 @@ local function castMacro(unit, spell)
 	return "#showtooltip " .. spell .. "\n/cast [@" .. unit .. "] " .. spell
 end
 
+local function weaponMacro(spell, slot)
+	return "#showtooltip " .. spell .. "\n/cast " .. spell .. "\n/use " .. slot
+end
+
+local function weaponEnchanted()
+	local main, off, offItem
+	if GetWeaponEnchantInfo then
+		local ok, hasMain, _, _, _, hasOff = pcall(GetWeaponEnchantInfo)
+		if ok and not (issecretvalue and (issecretvalue(hasMain) or issecretvalue(hasOff))) then
+			main = hasMain and true or false
+			off = hasOff and true or false
+		end
+	end
+	if GetInventoryItemID then
+		local ok, id = pcall(GetInventoryItemID, "player", 17)
+		if ok and type(id) == "number" and id > 0 then offItem = true end
+	end
+	return main, off, offItem
+end
+
+local function applyWeapon(button)
+	local weapon = button:GetAttribute("weaponbuff")
+	if type(weapon) ~= "string" or weapon == "" then return false end
+	local main, off, offItem = weaponEnchanted()
+	if main == false or main == nil then
+		button:SetAttribute("type", "macro")
+		button:SetAttribute("macrotext", weaponMacro(weapon, 16))
+		return true
+	end
+	if offItem and off == false then
+		button:SetAttribute("type", "macro")
+		button:SetAttribute("macrotext", weaponMacro(weapon, 17))
+		return true
+	end
+	return false
+end
+
 local function partyUnits(walk)
 	if not walk then return { "player" } end
 	local units = { "player" }
@@ -332,6 +372,7 @@ function FurySwipes.SyncBuffButton(advance)
 	end
 	local targetIndex
 	if allPresent then
+		if applyWeapon(button) then return end
 		local armor = button:GetAttribute("armorspell")
 		if type(armor) == "string" and armor ~= "" and auraPresent("player", armor) ~= true then
 			button:SetAttribute("type", "macro")
@@ -340,6 +381,7 @@ function FurySwipes.SyncBuffButton(advance)
 		end
 		targetIndex = 1
 	elseif anyUnknown then
+		if advance and button:GetAttribute("partywalk") ~= "1" and applyWeapon(button) then return end
 		if advance then index = index + 1 end
 		if index < 1 or index > #units then index = 1 end
 		targetIndex = index
@@ -462,9 +504,12 @@ function FurySwipes.RefreshActions()
 	local partyWalk = "0"
 	local partyKnown = "1"
 	local partyWarn = ""
+	local weaponSpell = ""
 	for i = 1, #buffs do
 		local entry = buffs[i]
-		if entry.party then
+		if entry.weapon then
+			weaponSpell = entry.spell or ""
+		elseif entry.party then
 			partySpell = entry.spell or ""
 			partyAura = entry.aura or entry.spell or ""
 			partyWalk = entry.group and "1" or "0"
@@ -481,6 +526,7 @@ function FurySwipes.RefreshActions()
 	buttons.buff:SetAttribute("partywalk", partyWalk)
 	buttons.buff:SetAttribute("partyknown", partyKnown)
 	buttons.buff:SetAttribute("partywarn", partyWarn)
+	buttons.buff:SetAttribute("weaponbuff", weaponSpell)
 	FurySwipes.SyncBuffButton()
 	setMacroButton(buttons.assist, FurySwipes.AttackMacro(nil, { startattack = false }))
 	setMacroButton(buttons.follow, FurySwipes.FollowMacro(false))

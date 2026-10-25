@@ -72,7 +72,7 @@ OpenMultiBoxing's own hotkeys (Ctrl-F1, Ctrl-Shift-N, and the rest) are not game
 
 | Key | What happens |
 | --- | --- |
-| 1 | Buffs, one person per press. A mage casts Arcane Intellect, and a priest casts Power Word: Fortitude, on self and then on each party member who lacks it. The next press applies armor or Inner Fire. If that buff is not trained, key 1 says so. Warlocks and hunters also summon a pet. |
+| 1 | Buffs, one person per press. Mages cast Arcane Intellect, priests cast Power Word: Fortitude, and druids cast Mark of the Wild on self and then on each party member who lacks it. A shaman casts Lightning Shield, then Flametongue Weapon on the weapon (Rockbiter until Flametongue is trained). If a buff is not trained, key 1 says so. Warlocks and hunters also summon a pet. |
 | 2 | Main action. Damage roles assist the leader and cast. Healers heal the lowest health group member who is missing health, and cast a damage spell when everyone is full. |
 | 3 | Cleave, or a heal on the lowest health group member. |
 | 4 | Assist the leader. |

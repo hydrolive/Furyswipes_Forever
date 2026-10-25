@@ -295,6 +295,12 @@ local INTELLECT_RANKS = { 10157, 10156, 1461, 1460, 1459 }
 local FORTITUDE_RANKS = { 10938, 10937, 2791, 1245, 1244, 1243 }
 local PRAYER_FORTITUDE = { 21564, 21562 }
 local INNER_FIRE_RANKS = { 10952, 10951, 1006, 602, 7128, 588 }
+local MARK_RANKS = { 9885, 9884, 8907, 5234, 6756, 5232, 1126 }
+local GIFT_OF_THE_WILD = { 21850, 21849 }
+local THORNS_RANKS = { 9910, 9756, 8914, 1075, 782, 467 }
+local LIGHTNING_SHIELD_RANKS = { 10432, 10431, 8134, 945, 905, 325, 324 }
+local FLAMETONGUE_RANKS = { 16342, 16341, 16339, 8030, 8027, 8024 }
+local ROCKBITER_RANKS = { 16316, 16315, 16314, 10399, 8019, 8018, 8017 }
 
 local function idListed(ids, spellId)
 	return ids[spellId] or known(spellId)
@@ -384,6 +390,57 @@ function FurySwipes.KnownBuffs(class)
 		end
 		if anyListed(book, bookIds, INNER_FIRE_RANKS, "Inner Fire") then
 			pushBuff(spells, seen, "Inner Fire", "self")
+		end
+		return spells
+	end
+	if class == "DRUID" then
+		-- Mark of the Wild is single-target. The saved macro had no buff line
+		-- because the spellbook scan missed the name.
+		local gift = anyListed(book, bookIds, GIFT_OF_THE_WILD, "Gift of the Wild")
+		if gift then
+			spells[#spells + 1] = {
+				spell = "Gift of the Wild",
+				aura = "Mark of the Wild",
+				party = true,
+				trained = true,
+			}
+			seen["Gift of the Wild"] = true
+		else
+			local trained = anyListed(book, bookIds, MARK_RANKS, "Mark of the Wild")
+			spells[#spells + 1] = {
+				spell = "Mark of the Wild",
+				group = true,
+				aura = "Mark of the Wild",
+				party = true,
+				trained = trained or not haveBook,
+				warn = "Mark of the Wild is not trained. Buy rank 1 from a druid trainer, then press 1 again.",
+			}
+			seen["Mark of the Wild"] = true
+		end
+		if anyListed(book, bookIds, THORNS_RANKS, "Thorns") or not haveBook then
+			pushBuff(spells, seen, "Thorns", "self")
+		end
+		return spells
+	end
+	if class == "SHAMAN" then
+		local shield = anyListed(book, bookIds, LIGHTNING_SHIELD_RANKS, "Lightning Shield")
+		spells[#spells + 1] = {
+			spell = "Lightning Shield",
+			aura = "Lightning Shield",
+			party = true,
+			trained = shield or not haveBook,
+			warn = "Lightning Shield is not trained. Buy rank 1 from a shaman trainer, then press 1 again.",
+		}
+		seen["Lightning Shield"] = true
+		local flame = anyListed(book, bookIds, FLAMETONGUE_RANKS, "Flametongue Weapon")
+		local rock = anyListed(book, bookIds, ROCKBITER_RANKS, "Rockbiter Weapon")
+		if flame or not haveBook then
+			spells[#spells + 1] = { spell = "Flametongue Weapon", weapon = true }
+		elseif rock then
+			spells[#spells + 1] = { spell = "Rockbiter Weapon", weapon = true }
+		elseif UnitLevel and UnitLevel("player") >= 10 and FurySwipes.Print and not FurySwipes.flameWarned then
+			FurySwipes.flameWarned = true
+			FurySwipes.Print("Flametongue Weapon is not trained. Buy it from a shaman trainer, then press 1 again.")
 		end
 		return spells
 	end

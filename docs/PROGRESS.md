@@ -20,6 +20,10 @@ The Forever addon is written, committed, and copied to `D:\WoWMB\World of Warcra
 
 Newest first.
 
+### 2026-10-25 — Druid and shaman key 1 had no buff
+
+Grim Reaper's saved buff macro was empty, so Mark of the Wild never cast. Free Range is a shaman and the buff macro was empty too, so Lightning Shield and the weapon imbue never cast. Key 1 now casts Mark of the Wild on the druid and the party, then Thorns. A shaman casts Lightning Shield, then Flametongue Weapon on the weapon. Rockbiter is used until Flametongue is trained. Free Range's roster role is melee. Needs a `/reload`.
+
 ### 2026-10-25 — Healer kept healing the group leader
 
 The heal macro was `/cast [@party1][@party2]...`. On the other characters `party1` is the group leader, so the lowest health member never received the cast. Tank priority could also force the leader. Key 2 and key 3 now cast on the lowest health living group member. Needs a `/reload`.
