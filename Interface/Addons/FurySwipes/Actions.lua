@@ -167,16 +167,27 @@ function FurySwipes.AttackMacro(spell, opts)
 end
 
 function FurySwipes.BuffMacro(entries)
-	local lines = { "#showtooltip" }
+	local tip = entries[1] and (entries[1].aura or entries[1].spell)
+	local lines = { "#showtooltip" .. (tip and (" " .. tip) or "") }
 	for i = 1, #entries do
 		local entry = entries[i]
+		local aura = entry.aura or entry.spell
 		if entry.nopet then
 			lines[#lines + 1] = "/cast [nopet] " .. entry.spell
+		elseif entry.group then
+			-- One matching clause fires per press. Party members missing the
+			-- buff come first, then the mage. Stays under the 255 character cap.
+			local c = "help,nodead,nobuff:" .. aura
+			lines[#lines + 1] = "/cast [@party1," .. c .. "][@party2," .. c .. "][@party3," .. c .. "][@party4," .. c .. "][@player," .. c .. "] " .. entry.spell
 		else
-			lines[#lines + 1] = "/cast [nobuff:" .. entry.spell .. "] " .. entry.spell
+			-- @player so an enemy target does not eat a self buff.
+			lines[#lines + 1] = "/cast [@player,nobuff:" .. aura .. "] " .. entry.spell
 		end
 	end
-	if #lines == 1 then lines[#lines + 1] = "# FurySwipes: no self buff for this class" end
+	if #lines == 1 then
+		lines[1] = "#showtooltip"
+		lines[#lines + 1] = "# FurySwipes: no self buff for this class"
+	end
 	return table.concat(lines, "\n")
 end
 

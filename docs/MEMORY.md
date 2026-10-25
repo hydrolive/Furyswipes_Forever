@@ -49,7 +49,7 @@ Class defaults: warrior tank; rogue, death knight, monk, demon hunter melee; hun
 - Invites use `C_PartyInfo.InviteUnit`. Accept uses `AcceptGroup` and `StaticPopup_Hide("PARTY_INVITE")`. The important accept path is `PARTY_INVITE_REQUEST`, because key 0 is pressed on every window before the invite arrives.
 - `C_PartyInfo.SetLootMethod("freeforall")` matches Mama on this client. Call it with `pcall`.
 - Character macros start after `Constants.MacroConsts.MAX_ACCOUNT_MACROS` (fallback 120). Icon file id `134400`.
-- Spell names come from `C_Spell` / `C_SpellBook`, with older fallbacks. Unknown ids are skipped.
+- Spell names come from `C_Spell` / `C_SpellBook`, with older fallbacks. Unknown ids are skipped. Buffs are taken from the player spellbook (`GetSpellBookItemInfo`), skipping future and off-spec entries. Mage Arcane Intellect is single-target here; Arcane Brilliance is the group spell. The buff macro aims Intellect at party1-4, then player, and uses `@player` for armor so a hostile target does not eat the cast.
 - Bindings are per account. The first `/fs init` on each account has to be typed, because the bind does not exist yet. Later, Ctrl-I can be broadcast. `/fs init` uses force and replaces `1`–`5` and `0`. Login reapplies only when `FurySwipesDB.autoBind` is set.
 
 ## Keys

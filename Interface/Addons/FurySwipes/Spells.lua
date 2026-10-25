@@ -151,10 +151,11 @@ local INTERRUPT = {
 	EVOKER = { 351338 },
 }
 
--- Self buffs. Modern group buffs land on the whole party when cast on yourself.
--- nopet entries summon a pet instead of testing a buff.
+-- Self buffs, highest rank first. On this client Arcane Intellect is
+-- single-target, so the macro aims it at each party member. Arcane Brilliance
+-- is the one-cast group version. Armor is only the best one the mage knows.
 local BUFF = {
-	MAGE = { 1459, 7302, 168 },
+	MAGE = { 23028, 10157, 10156, 1461, 1460, 1459, 22783, 22782, 6117, 10220, 10219, 7320, 7302, 7301, 7300, 168 },
 	PRIEST = { 1243, 17 },
 	DRUID = { 1126 },
 	SHAMAN = { 324 },
@@ -222,19 +223,101 @@ function FurySwipes.PickSpell(ids)
 	end
 end
 
+local function playerSpellBook()
+	local found = {}
+	local function add(name)
+		name = FurySwipes.CleanSpellName(name)
+		if name then found[name] = true end
+	end
+	pcall(function()
+		if not (C_SpellBook and C_SpellBook.GetNumSpellBookSkillLines and C_SpellBook.GetSpellBookSkillLineInfo and C_SpellBook.GetSpellBookItemInfo) then
+			return
+		end
+		local bank = Enum and Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Player
+		if not bank then return end
+		local future = Enum.SpellBookItemType and Enum.SpellBookItemType.FutureSpell
+		local spellType = Enum.SpellBookItemType and Enum.SpellBookItemType.Spell
+		local lines = C_SpellBook.GetNumSpellBookSkillLines() or 0
+		for line = 1, lines do
+			local info = C_SpellBook.GetSpellBookSkillLineInfo(line)
+			if type(info) == "table" and not info.shouldHide and not info.offSpecID then
+				local off = info.itemIndexOffset or 0
+				local count = info.numSpellBookItems or 0
+				for slot = off + 1, off + count do
+					local item = C_SpellBook.GetSpellBookItemInfo(slot, bank)
+					if type(item) == "table" and not item.isPassive and not item.isOffSpec then
+						local unlearned = future and item.itemType == future
+						local castable = (not spellType) or item.itemType == nil or item.itemType == spellType
+						if not unlearned and castable then add(item.name) end
+					end
+				end
+			end
+		end
+	end)
+	return found
+end
+
+local function pushBuff(spells, seen, name, kind, aura)
+	name = FurySwipes.CleanSpellName(name)
+	if not name or seen[name] then return end
+	seen[name] = true
+	spells[#spells + 1] = { spell = name, group = kind == "group", aura = aura or name }
+end
+
 function FurySwipes.KnownBuffs(class)
 	local spells = {}
+	local seen = {}
 	local pet = FurySwipes.PickSpell(PET[class])
 	if pet then spells[#spells + 1] = { spell = pet, nopet = true } end
+	local book = playerSpellBook()
+	local haveBook = next(book) ~= nil
+	if class == "MAGE" and haveBook then
+		if book["Arcane Brilliance"] then
+			pushBuff(spells, seen, "Arcane Brilliance", "self", "Arcane Intellect")
+		elseif book["Arcane Intellect"] then
+			pushBuff(spells, seen, "Arcane Intellect", "group", "Arcane Intellect")
+		elseif FurySwipes.Print and not FurySwipes.buffWarned then
+			FurySwipes.buffWarned = true
+			FurySwipes.Print("Arcane Intellect is not in the spellbook. Train it, then press 1 again.")
+		end
+		if book["Mage Armor"] then
+			pushBuff(spells, seen, "Mage Armor", "self")
+		elseif book["Ice Armor"] then
+			pushBuff(spells, seen, "Ice Armor", "self")
+		elseif book["Frost Armor"] then
+			pushBuff(spells, seen, "Frost Armor", "self")
+		end
+		return spells
+	end
 	local ids = BUFF[class]
+	local haveArmor = false
+	local haveIntellect = false
 	if ids then
 		for i = 1, #ids do
 			request(ids[i])
-			if known(ids[i]) then
-				local name = FurySwipes.CleanSpellName(spellName(ids[i]))
-				if name then spells[#spells + 1] = { spell = name } end
+			local name = FurySwipes.CleanSpellName(spellName(ids[i]))
+			local inBook = name and book[name]
+			if name and (known(ids[i]) or inBook) then
+				if name == "Arcane Brilliance" then
+					pushBuff(spells, seen, name, "self", "Arcane Intellect")
+					haveIntellect = true
+				elseif name == "Arcane Intellect" and not haveIntellect then
+					pushBuff(spells, seen, name, "group", "Arcane Intellect")
+					haveIntellect = true
+				elseif name == "Mage Armor" or name == "Ice Armor" or name == "Frost Armor" then
+					if not haveArmor then
+						pushBuff(spells, seen, name, "self")
+						haveArmor = true
+					end
+				else
+					pushBuff(spells, seen, name, "self")
+				end
 			end
 		end
+	end
+	if class == "MAGE" and not haveIntellect and FurySwipes.Print and not FurySwipes.buffWarned then
+		FurySwipes.buffWarned = true
+		FurySwipes.Print("Arcane Intellect is not in the spellbook. Train it, then press 1 again.")
 	end
 	return spells
 end

@@ -72,7 +72,7 @@ OpenMultiBoxing's own hotkeys (Ctrl-F1, Ctrl-Shift-N, and the rest) are not game
 
 | Key | What happens |
 | --- | --- |
-| 1 | Self buffs, one missing buff per press. Warlocks and hunters also summon a pet. |
+| 1 | Buffs, one missing buff per press. A mage casts Arcane Intellect on each unbuffed party member, then armor. Warlocks and hunters also summon a pet. |
 | 2 | Main action. Damage roles assist the leader and cast. Healers heal if someone is under the roster thresholds, otherwise they cast a damage spell. |
 | 3 | Cleave, or a group heal on a healer. |
 | 4 | Assist the leader. |

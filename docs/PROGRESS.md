@@ -20,6 +20,10 @@ The Forever addon is written, committed, and copied to `D:\WoWMB\World of Warcra
 
 Newest first.
 
+### 2026-10-24 — Mage key 1 skipped Arcane Intellect
+
+Glass Cannon's buff macro only cast Frost Armor. Arcane Intellect is single-target on this client, and a bare `/cast` hits the current target, so an enemy target also blocks it. Key 1 now reads the spellbook and casts Arcane Intellect on the first party member who lacks it, then the mage. The next press applies armor. Needs a `/reload`.
+
 ### 2026-10-24 — Key 2 healed at full health
 
 The healer's key 2 rested on a party heal that cannot see health, so full health still cast a heal. Key 2 now rests on the damage macro. A heal is chosen only when someone is at or under the roster thresholds (self 30%, tank 50%, anyone 33%). Keys 3 and 5 still heal on purpose. Needs a `/reload`, then key 2 at full health should attack.
