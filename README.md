@@ -20,7 +20,7 @@ The addon folder is `Interface\AddOns\FurySwipes`.
 
 On this machine it is already copied to:
 
-`D:\WoW\World of Warcraft\_forever_\Interface\AddOns\FurySwipes`
+`D:\WoWMB\World of Warcraft\_forever_\Interface\AddOns\FurySwipes`
 
 If you set up another client, copy that folder into that client's `Interface\AddOns`. Enable **FurySwipes** at the character screen. The addon has no extra libraries.
 

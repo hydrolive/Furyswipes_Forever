@@ -15,9 +15,9 @@ HotkeyNet is not part of this version. Do not generate HotkeyNet scripts or try 
 | Repo | `D:\Furyswipes_Forever` |
 | GitHub | `https://github.com/hydrolive/Furyswipes_Forever.git` (`main`) |
 | Addon in the repo | `Interface/AddOns/FurySwipes` |
-| Forever client | `D:\WoW\World of Warcraft\_forever_` |
-| Forever AddOns | `D:\WoW\World of Warcraft\_forever_\Interface\AddOns` |
-| Deployed addon | `D:\WoW\World of Warcraft\_forever_\Interface\AddOns\FurySwipes` |
+| Forever client | `D:\WoWMB\World of Warcraft\_forever_` |
+| Forever AddOns | `D:\WoWMB\World of Warcraft\_forever_\Interface\AddOns` |
+| Deployed addon | `D:\WoWMB\World of Warcraft\_forever_\Interface\AddOns\FurySwipes` |
 
 `Interface\Addons` and `Interface\AddOns` are the same directory on Windows.
 

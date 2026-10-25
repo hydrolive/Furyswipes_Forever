@@ -2,7 +2,7 @@
 
 ## Now
 
-The Forever addon is written, committed, and copied to the local client. It has not been loaded on a logged-in character.
+The Forever addon is written, committed, and copied to `D:\WoWMB\World of Warcraft\_forever_\Interface\AddOns\FurySwipes`. It has not been loaded on a logged-in character.
 
 **Next:** log each character in, run `/fs init`, and check the unverified rows in `docs/FEATURES.md`. Update a row to `done` only after that check. Record the result in the log below.
 
@@ -19,6 +19,10 @@ The Forever addon is written, committed, and copied to the local client. It has 
 ## Log
 
 Newest first.
+
+### 2026-10-24 — Deploy path is WoWMB
+
+The Forever client to update is `D:\WoWMB\World of Warcraft\_forever_`, not `D:\WoW\World of Warcraft\_forever_`. Copied `FurySwipes` into `D:\WoWMB\World of Warcraft\_forever_\Interface\AddOns\FurySwipes`. The six files matched the repo by hash. Other addons in that folder were left as they were. An earlier copy under `D:\WoW\...` is not the client to maintain.
 
 ### 2026-10-24 — Tracker and commit rule
 
